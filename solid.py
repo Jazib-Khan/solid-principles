@@ -18,16 +18,29 @@ class Order:
         return total
 
 class PaymentProcessor(ABC):
+
     @abstractmethod
     def pay(self, order):
         pass
 
-class DebitPaymentProcessor(PaymentProcessor):
+class PaymentProcessor_SMS(PaymentProcessor):
+
+    @abstractmethod
+    def auth_sms(self, order):
+        pass
+
+class DebitPaymentProcessor(PaymentProcessor_SMS):
 
     def __init__(self, security_code):
         self.security_code = security_code
 
+    def auth_sms(self, code):
+        print(f"Verifying SMS code {code}")
+        self.verified = True
+
     def pay(self, order):
+        if not self.verified:
+            raise Exception("Not authorized")
         print("Processing debit payment type")
         print(f"Verifying security code: {self.security_code}")
         order.status = "paid"
@@ -42,12 +55,18 @@ class CreditPaymentProcessor(PaymentProcessor):
         print(f"Verifying security code: {self.security_code}")
         order.status = "paid"
 
-class PaypalPaymentProcessor(PaymentProcessor):
+class PaypalPaymentProcessor(PaymentProcessor_SMS):
 
     def __init__(self, email_address):
         self.email_address = email_address
 
+    def auth_sms(self, code):
+        print(f"Verifying SMS code {code}")
+        self.verified = True
+
     def pay(self, order):
+        if not self.verified:
+            raise Exception("Not authorized")
         print("Processing PayPal payment type")
         print(f"Verifying email address: {self.email_address}")
         order.status = "paid"
